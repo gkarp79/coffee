@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout1}">
+
+<!-- 사용자 스크립트 추가 -->
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+
+
+        $(document).ready(function () {
+            /*$("#searchBtn").on("click",function(e) {
+                e.preventDefault();
+                page(0);
+            });*/
+        });
+
+        function page(page) {
+            var searchDateType = $("#searchDateType").val();
+            var searchSellStatus = $("#searchSellStatus").val();
+            var searchBy = $("#searchBy").val();
+            var searchQuery = $("#searchQuery").val();
+
+            location.href = "/manager/orders/" + page + "?searchDateType=" + searchDateType
+                + "&searchSellStatus=" + searchSellStatus
+                + "&searchBy=" + searchBy
+                + "&searchQuery=" + searchQuery;
+        }
+
+        function status_type(status) {
+            var ajaxOption ={
+                url: "/manager/orderstatus/" + status,
+                type: "GET",
+                data:{
+                    "items": status
+                },
+                cache: false,
+                success: function (result, status) {
+                    console.log(result);
+                }
+            };
+        }
+
+    </script>
+</th:block>
+
+<!-- 사용자 CSS 추가 -->
+<th:block layout:fragment="css">
+    <style>
+        select {
+            margin-right: 10px;
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="content">
+    <h2>
+        <a href="/manager/orders">전체 조회</a> |
+        <a href="/manager/orderstatus/ORDER">주문 접수</a> |
+        <a href="/manager/orderstatus/CANCEL">주문 취소</a> |
+        <a href="/manager/orderstatus/ORDER_CHECK">주문확인</a> |
+        <a href="/manager/orderstatus/MONEY_CHECK">입금확인</a> |
+        <a href="/manager/orderstatus/PROCESSING">출고 준비중</a> |
+        <a href="/manager/orderstatus/DONE">출고 완료</a>
+    </h2>
+
+    <form th:action="@{'/manager/orders/' + ${items.number}}" role="form" method="get" th:object="${items}">
+        <table class="table">
+            <thead>
+            <tr>
+                <td>주문번호</td>
+                <td>상품명</td>
+                <td>주문자</td>
+                <td>주문수량</td>
+                <td>주문일</td>
+                <td>주문상태</td>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item, status: ${items.getContent()}">
+                <td th:text="${item.id}"></td>
+                <td>
+                    <a th:href="'/manager/order/'+${item.id}" th:text="${item.itemNm}"></a>
+                </td>
+                <td th:text="${item.buyer}"></td>
+                <td th:text="${item.count}"></td>
+                <td th:text="${item.updateDate}"></td>
+                <td th:switch="${item.status}">
+                    <span th:case="${T(com.coffee.constant.OrderStatus).ORDER}">주문 접수</span>
+                    <span th:case="${T(com.coffee.constant.OrderStatus).CANCEL}">주문 취소</span>
+                    <span th:case="${T(com.coffee.constant.OrderStatus).ORDER_CHECK}">주문 확인</span>
+                    <span th:case="${T(com.coffee.constant.OrderStatus).MONEY_CHECK}">입금 확인</span>
+                    <span th:case="${T(com.coffee.constant.OrderStatus).PROCESSING}">출고 준비중</span>
+                    <span th:case="${T(com.coffee.constant.OrderStatus).DONE}">출고 완료</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div th:with="start=${(items.number/maxPage)*maxPage + 1}, end=(${(items.totalPages == 0) ? 1 : (start + (maxPage - 1) < items.totalPages ? start + (maxPage - 1) : items.totalPages)})">
+            <ul class="pagination justify-content-center">
+
+                <li class="page-item" th:classappend="${items.first}?'disabled'">
+                    <a th:onclick="'javascript:page(' + ${items.number - 1} + ')'" aria-label='Previous'
+                       class="page-link">
+                        <span aria-hidden='true'>Previous</span>
+                    </a>
+                </li>
+
+                <li class="page-item" th:each="page: ${#numbers.sequence(start, end)}"
+                    th:classappend="${items.number eq page-1}?'active':''">
+                    <a th:onclick="'javascript:page(' + ${page - 1} + ')'" th:inline="text" class="page-link">[[${page}]]</a>
+                </li>
+
+                <li class="page-item" th:classappend="${items.last}?'disabled'">
+                    <a th:onclick="'javascript:page(' + ${items.number + 1} + ')'" aria-label='Next' class="page-link">
+                        <span aria-hidden='true'>Next</span>
+                    </a>
+                </li>
+
+            </ul>
+        </div>
+
+        <!--<div class="form-inline justify-content-center" th:object="${OrderManageDto}">
+            <select th:field="*{orderDate}" class="form-control" style="width:auto;">
+                <option value="all">전체기간</option>
+                <option value="1d">1일</option>
+                <option value="1w">1주</option>
+                <option value="1m">1개월</option>
+                <option value="6m">6개월</option>
+            </select>
+            <select th:field="*{status}" class="form-control" style="width:auto;">
+                <option value="">판매상태(전체)</option>
+                <option value="SELL">판매</option>
+                <option value="SOLD_OUT">품절</option>
+            </select>
+
+            <select th:field="*{searchBy}" class="form-control" style="width:auto;">
+                <option value="itemNm">상품명</option>
+                &lt;!&ndash;<option value="createdBy">등록자</option>&ndash;&gt;
+            </select>
+
+            <input th:field="*{searchQuery}" type="text" class="form-control" placeholder="상품명을 입력해주세요">
+            <button id="searchBtn" type="submit" class="btn btn-primary">검색</button>
+        </div>-->
+    </form>
+</div>
+
+</html>
